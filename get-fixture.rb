@@ -34,10 +34,18 @@ def promptForFixturePath()
 	return gets.chomp
 end
 
-def saveFixture(fixture_path, feed_data)
-	file = File.new(fixture_path+"fix.json", "w")
+def getResponseHeaders()
+	#todo
+end
+
+def saveFixture(fixture_path, fixture_name, feed_data)
+	file = File.new(fixture_path+fixture_name, "w")
 	file.write(feed_data)
 	file.close()
+end
+
+def convertUrlToFixtureFileName(fixture_url)
+	return fixture_url.gsub(/(\W+)/, '_')+".json"
 end
 
 cert_path = getPathToCert()
@@ -50,13 +58,15 @@ http.key = OpenSSL::PKey::RSA.new(pem)
 http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 request = Net::HTTP::Get.new(uri.request_uri)
+request['Accept'] = 'application/json'
 
 fixture_path = getPathToFixtures()
 if fixture_path == ""
 	fixture_path = promptForFixturePath()
 end
 
-feed = http.request(request).body
-saveFixture(fixture_path, feed)
+feed = http.request(request).body 
+fixture_name = convertUrlToFixtureFileName(uri.to_s)
+saveFixture(fixture_path, fixture_name, feed)
 
 puts "Done!"
