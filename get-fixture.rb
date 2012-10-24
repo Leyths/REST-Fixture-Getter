@@ -35,12 +35,12 @@ def promptForFixturePath()
 end
 
 def getResponseHeaders()
-	#todo
+	return "HTTP/1.1 200 OK\nServer: Fixture\nContent-Language: en-GB\nContent-Type: application/json;charset=UTF-8\n\n"
 end
 
 def saveFixture(fixture_path, fixture_name, feed_data)
 	file = File.new(fixture_path+fixture_name, "w")
-	file.write(feed_data)
+	file.write(getResponseHeaders()+feed_data)
 	file.close()
 end
 
@@ -48,14 +48,19 @@ def convertUrlToFixtureFileName(fixture_url)
 	return fixture_url.gsub(/(\W+)/, '_')+".json"
 end
 
+def getHttpClient(uri, pem)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.cert = OpenSSL::X509::Certificate.new(pem)
+    http.key = OpenSSL::PKey::RSA.new(pem)
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    return http
+end
+
 cert_path = getPathToCert()
 uri = URI.parse(promptForNitroUrl())
 pem = File.read(cert_path)
-http = Net::HTTP.new(uri.host, uri.port)
-http.use_ssl = true
-http.cert = OpenSSL::X509::Certificate.new(pem)
-http.key = OpenSSL::PKey::RSA.new(pem)
-http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+http = getHttpClient(uri, pem)
 
 request = Net::HTTP::Get.new(uri.request_uri)
 request['Accept'] = 'application/json'
